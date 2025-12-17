@@ -1,0 +1,58 @@
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "port": 8000,
+            "protocol": "vless",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "0447f7f3-64af-4da7-8d4e-dee5ba37cb15",
+                        "flow": "xtls-rprx-vision"
+                    }
+                ],
+                "decryption": "none",
+                "fallbacks": [
+                    {
+                        "dest": 8080,
+                        "xver": 0
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "tcp",
+                "security": "reality",
+                "realitySettings": {
+                    "show": false,
+                    "dest": "www.apple.com:443",
+                    "xver": 0,
+                    "serverNames": [
+                        "www.apple.com",
+                        "images.apple.com"
+                    ],
+                    "privateKey": "EI78_-w1gk6SC-MgT9S5qTVO4H3r2Ly8L5_y1htD42E",
+                    "shortIds": [
+                        "62"
+                    ]
+                },
+                "sockopt": {
+                    "tcpKeepAliveIdle": 15,
+                    "tcpKeepAliveInterval": 5,
+                    "tcpFastOpen": true
+                }
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom",
+            "tag": "direct"
+        },
+        {
+            "protocol": "blackhole",
+            "tag": "blocked"
+        }
+    ]
+}

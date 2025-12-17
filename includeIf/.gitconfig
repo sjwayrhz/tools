@@ -1,0 +1,14 @@
+# --- 全局配置 (不要写 [user] 身份信息) ---
+# 这里只放一些通用的，比如颜色配置、编辑器配置等
+[core]
+    autocrlf = true
+
+# --- 路径匹配 1: sjwayrhz ---
+# 注意：Windows 路径建议用斜杠 /，且最后加 / 表示目录
+# gitdir/i 表示忽略大小写（Windows 建议用这个）
+[includeIf "gitdir/i:D:/Projects-sjwayrhz/"]
+    path = ~/.gitconfig-sjwayrhz
+
+# --- 路径匹配 2: hsitj ---
+[includeIf "gitdir/i:D:/Projects-hsitj/"]
+    path = ~/.gitconfig-hsitj

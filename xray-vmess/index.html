@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Welcome to my App</title>
+    <style>
+        body {
+            width: 35em;
+            margin: 0 auto;
+            font-family: Tahoma, Verdana, Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding-top: 50px;
+        }
+
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <h1>System is Running</h1>
+        <p>Status: <span style="color:green">Active</span></p>
+        <p>Current Time:
+            <script>document.write(new Date().toISOString())</script>
+        </p>
+    </div>
+</body>
+
+</html>

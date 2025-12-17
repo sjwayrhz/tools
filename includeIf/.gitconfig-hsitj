@@ -1,0 +1,5 @@
+[user]
+    name = hsitj
+    email = sjwayrhz@hotmail.com
+[core]
+    sshCommand = "ssh -i ~/.ssh/id_rsa_hsitj"
