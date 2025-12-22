@@ -27,7 +27,7 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
-def start_web_server(port=8080):
+def start_web_server(port=65080):
     try:
         server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
         print(f"HTTP Monitor started on port {port}")
@@ -40,7 +40,7 @@ def run_keepalive():
     
     # --- 启动 HTTP 监控线程 ---
     # Daemon=True 表示主程序退出时，这个线程也会随之退出
-    web_thread = threading.Thread(target=start_web_server, args=(8080,))
+    web_thread = threading.Thread(target=start_web_server, args=(65080,))
     web_thread.daemon = True
     web_thread.start()
 

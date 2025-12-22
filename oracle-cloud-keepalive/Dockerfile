@@ -9,8 +9,8 @@ COPY keepalive.py .
 # 设置无缓冲输出
 ENV PYTHONUNBUFFERED=1
 
-# 暴露 8080 端口
-EXPOSE 8080
+# 暴露 65080 端口
+EXPOSE 65080
 
 # 启动命令
 CMD ["python", "keepalive.py"]
