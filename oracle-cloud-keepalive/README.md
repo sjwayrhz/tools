@@ -1,6 +1,6 @@
 # 0. 快速启动
 ```
-docker run -d --name oracle-keepalive --restart always sjwayrhz/oracle-alive:latest
+docker run -d -p 65080:65080 --name oracle-keepalive --restart always sjwayrhz/oracle-alive:latest
 ```
 # 1. 构建镜像（命名为 oracle-alive）
 
