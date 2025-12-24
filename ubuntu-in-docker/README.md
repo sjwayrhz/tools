@@ -1,7 +1,7 @@
 在 Linux 上通过 Cloudflare Tunnel 使用 SSH 登录，本质上是把 **Cloudflare 提供的“加密隧道”** 和 **传统的“SSH 密钥认证”** 结合起来。
 
 ```
-debian:bookworm 对应的镜像是 ->
+ubuntu:24.04 对应的镜像是 ->
 
 sjwayrhz/ubuntu:tunnel-v0.1
 ```
