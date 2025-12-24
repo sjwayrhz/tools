@@ -1,17 +1,14 @@
 services:
-  recorder:
+  app:
     image: ihmily/douyin-live-recorder:latest
-    container_name: douyin-recorder
-    restart: always
+    environment:
+      - TERM=xterm-256color
     tty: true
     stdin_open: true
+    #build: .
     volumes:
-      - ./config.ini:/app/config/config.ini
-      - ./URL_config.ini:/app/config/URL_config.ini
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - ./backup_config:/app/backup_config
       - ./downloads:/app/downloads
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    environment:
-      - TZ=Asia/Shanghai
+    restart: always

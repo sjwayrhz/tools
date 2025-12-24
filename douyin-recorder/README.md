@@ -3,3 +3,11 @@
 ```
 https://github.com/ihmily/DouyinLiveRecorder
 ```
+启动方法
+```
+docker-compose up -d 
+```
+关闭方法
+```
+docker-compose down
+```
