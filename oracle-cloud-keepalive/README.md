@@ -1,6 +1,6 @@
 # 0. 快速启动
 ```
-自定义CPU和内存，例如15%CPU，100MB内存
+自定义CPU和内存，例如15%CPU，100MB内存,每天0点到4点下载ProPlus2024Retail.img镜像
 ```
 docker run --rm -p 65080:65080 -e TARGET_CPU_PERCENT=15 -e TARGET_MEMORY_MB=100 --name oracle-keepalive --restart always sjwayrhz/oracle-alive:v1.3
 ```
