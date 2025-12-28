@@ -39,7 +39,8 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
 
 # --- 流量下载任务 (凌晨保活) ---
 def download_traffic_job():
-    target_url = "https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/zh-cn/ProPlus2024Retail.img"
+    # target_url = "https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/zh-cn/ProPlus2024Retail.img" # v1.3下载Office 2024 ISO 镜像
+    target_url = "https://speed.cloudflare.com/__down?bytes=5368709120"  # v1.4 下载cloudflare 5GB测试文件
     rate_limit = "2.1M" 
 
     print(f"[{datetime.now()}] 🚀 启动凌晨流量保活任务 (Office 2024 ISO)...")

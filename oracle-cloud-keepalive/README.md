@@ -1,8 +1,8 @@
 # 0. 快速启动
 ```
-自定义CPU和内存，例如15%CPU，100MB内存,每天0点到4点下载ProPlus2024Retail.img镜像
+自定义CPU和内存，例如15%CPU，100MB内存,每天0点到4点下载5g文件
 ```
-docker run -d -p 65080:65080 -e TARGET_CPU_PERCENT=35 -e TARGET_MEMORY_MB=0 --name oracle-keepalive --restart always sjwayrhz/oracle-alive:v1.3
+docker run -d -p 65080:65080 -e TARGET_CPU_PERCENT=35 -e TARGET_MEMORY_MB=0 --name oracle-keepalive --restart always sjwayrhz/oracle-alive:v1.4
 ```
 # 1. 构建镜像（命名为 oracle-alive）
 
