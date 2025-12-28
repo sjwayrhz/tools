@@ -10,21 +10,24 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 STATUS = {
     "memory": "Not Allocated",
     "cpu": "Running",
-    "traffic": "Idle"  # 新增流量状态监控
+    "traffic": "Idle"
 }
 
-# --- HTTP 处理类 (用于 Uptime Kuma 等监控) ---
+# --- HTTP 处理类 (用于监控查看) ---
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/':
             self.send_response(200)
             self.send_header('Content-type', 'text/plain; charset=utf-8')
             self.end_headers()
+            
+            # 构建返回内容，增加了 Schedule 的展示
             response_text = (
                 f"Keepalive Running.\n"
-                f"Memory: {STATUS['memory']}\n"
+                f"Memory Status: {STATUS['memory']}\n"
                 f"CPU Status: {STATUS['cpu']}\n"
                 f"Traffic Status: {STATUS['traffic']}\n"
+                f"Schedule: Daily 00:00 - 05:00 (CST)\n"
                 f"Current Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
             )
             self.wfile.write(response_text.encode('utf-8'))
@@ -36,38 +39,33 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
 
 # --- 流量下载任务 (凌晨保活) ---
 def download_traffic_job():
-    # 目标链接：Office 2024 (约4.8GB)
     target_url = "https://officecdn.microsoft.com/db/492350f6-3a01-4f97-b9c0-c7c6ddf67d60/media/zh-cn/ProPlus2024Retail.img"
-    rate_limit = "2.1M"  # 16.8Mbps, 约占 50M 带宽的 33%
-    
-    print(f"[{datetime.now()}] 🚀 触发凌晨定时下载任务...")
+    rate_limit = "2.1M" 
+
+    print(f"[{datetime.now()}] 🚀 启动凌晨流量保活任务 (Office 2024 ISO)...")
     STATUS['traffic'] = f"Downloading at {rate_limit}..."
-    
+
     try:
-        # 使用 subprocess 调用系统 wget
-        # -O /dev/null 表示不占用磁盘，直接丢弃
+        # -O /dev/null 直接丢弃不占空间
         cmd = ["wget", f"--limit-rate={rate_limit}", "-O", "/dev/null", target_url]
         subprocess.run(cmd, check=True)
-        print(f"[{datetime.now()}] ✅ 流量保活任务完成。")
+        print(f"[{datetime.now()}] ✅ 任务完成。")
         STATUS['traffic'] = "Last task completed successfully"
     except Exception as e:
-        print(f"[{datetime.now()}] ❌ 流量任务失败: {e}")
+        print(f"[{datetime.now()}] ❌ 任务失败: {e}")
         STATUS['traffic'] = f"Failed: {e}"
 
 # --- 定时器线程逻辑 ---
 def scheduler_loop():
-    print("⏰ 定时任务线程已启动 (目标时段: 凌晨 00:00 - 04:59)")
+    print("⏰ 定时任务监控线程已启动 (目标: 00:00-04:59)")
     while True:
         now = datetime.now()
-        # 每天凌晨 0, 1, 2, 3, 4 点的 00 分触发
+        # 凌晨 0, 1, 2, 3, 4 点的 00 分触发
         if now.hour in [0, 1, 2, 3, 4] and now.minute == 0:
-            # 启动下载进程
             download_traffic_job()
-            # 执行完后强制休眠 65 秒，防止在同一分钟内重复触发
-            time.sleep(65)
-        
-        # 每隔 30 秒检查一次时钟
-        time.sleep(30)
+            time.sleep(65) # 避开重复触发
+
+        time.sleep(30) # 每 30 秒核对一次时间
 
 def start_web_server(port=65080):
     try:
@@ -78,47 +76,52 @@ def start_web_server(port=65080):
         print(f"Failed to start web server: {e}")
 
 def run_keepalive():
-    print("Starting Oracle Cloud Keepalive with Traffic Scheduler...")
+    print("Starting Oracle Cloud Keepalive Service...")
     
-    # 1. 启动 HTTP 监控线程 (65080 端口)
+    # 1. 启动 Web 监控线程
     web_thread = threading.Thread(target=start_web_server, args=(65080,))
     web_thread.daemon = True
     web_thread.start()
 
-    # 2. 启动凌晨流量定时器线程
+    # 2. 启动定时器线程
     traffic_thread = threading.Thread(target=scheduler_loop)
     traffic_thread.daemon = True
     traffic_thread.start()
 
-    # --- 参数获取 ---
+    # --- 获取环境变量参数 ---
     try:
         cpu_target_env = int(os.environ.get('TARGET_CPU_PERCENT', '15'))
         global_target = cpu_target_env / 100.0
-    except ValueError:
-         global_target = 0.15
-         cpu_target_env = 15
+    except:
+        global_target = 0.15
+        cpu_target_env = 15
 
     try:
         memory_mb_env = int(os.environ.get('TARGET_MEMORY_MB', '150'))
-    except ValueError:
+    except:
         memory_mb_env = 150
 
     STATUS['cpu'] = f"Running (Target: {cpu_target_env}%)"
-    STATUS['memory'] = f"Allocating ({memory_mb_env}MB)..."
 
-    # 3. 执行内存占用
-    try:
-        print(f"Allocating {memory_mb_env}MB Memory...")
-        memory_hog = bytearray(memory_mb_env * 1024 * 1024) 
-        memory_hog[0] = 1 
-        STATUS['memory'] = f"Allocated ({memory_mb_env}MB)"
-        print("Memory Allocated Successfully.")
-    except Exception as e:
-        STATUS['memory'] = f"Failed: {e}"
-        print(f"Memory Allocation Failed: {e}")
+    # 3. 执行内存占用 (修复 0MB 报错逻辑)
+    if memory_mb_env > 0:
+        try:
+            print(f"Allocating {memory_mb_env}MB Memory...")
+            memory_hog = bytearray(memory_mb_env * 1024 * 1024)
+            if len(memory_hog) > 0:
+                memory_hog[0] = 1
+            STATUS['memory'] = f"Allocated ({memory_mb_env}MB)"
+            print("Memory Allocated Successfully.")
+        except Exception as e:
+            STATUS['memory'] = f"Failed: {e}"
+            print(f"Memory Allocation Failed: {e}")
+    else:
+        STATUS['memory'] = "Disabled (0MB)"
+        print("Memory allocation skipped.")
 
-    # 4. 执行 CPU 周期占用 (主线程循环)
+    # 4. CPU 周期占用 (主循环)
     print(f"Starting CPU cycle (Target: {cpu_target_env}%)...")
+    import math
     cycle_total = 0.1
     
     while True:
