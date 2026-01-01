@@ -3,7 +3,14 @@
 ```
 ubuntu:24.04 对应的镜像是 ->
 
-sjwayrhz/ubuntu:tunnel-v0.1
+sjwayrhz/ubuntu:tunnel-v0.2
+```
+启动命令
+```
+docker run -d \
+  --name ubuntu-tunnel \
+  -e CLOUDFLARE_TUNNEL_TOKEN="your_cloudflare_tunnel_token_here" \
+  sjwayrhz/ubuntu:tunnel-v0.2
 ```
 
 以下是完整的操作步骤总结：
