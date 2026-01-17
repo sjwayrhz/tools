@@ -3,14 +3,18 @@ import os
 import threading
 import urllib.request
 import urllib.error
+import socket  # 新增
 from datetime import datetime, timedelta, timezone
-from http.server import BaseHTTPRequestHandler, HTTPServer
+# 修改点 1: 引入 ThreadingHTTPServer 实现多线程并发响应
+from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 
 # --- 配置参数 ---
-# 既然是保活，CPU稍微给高一点点容错，防止被宿主机误杀
 TARGET_CPU = int(os.environ.get('TARGET_CPU_PERCENT', '15')) 
 TARGET_MEM_MB = int(os.environ.get('TARGET_MEMORY_MB', '150'))
 MONITOR_PORT = 65080
+
+# --- 修改点 2: 设置全局 Socket 超时，防止 urllib read() 永久卡死 ---
+socket.setdefaulttimeout(60)
 
 # --- 限速下载配置 ---
 LIMIT_SPEED_MB = 2.1
@@ -43,7 +47,6 @@ def run_traffic_task():
     print(f"[{get_shanghai_now()}] 任务开始: 目标 {TOTAL_BYTES_TO_DOWNLOAD/1024/1024:.2f} MB")
 
     while downloaded_in_task < TOTAL_BYTES_TO_DOWNLOAD:
-        # 超时保护：如果跑了超过 55 分钟还在跑，强制结束，给下一小时腾出空间
         if time.time() - start_time_global > (DURATION_MINS * 60 + 13 * 60):
             STATUS['last_run'] = "Finished (Timeout)"
             break
@@ -52,11 +55,12 @@ def run_traffic_task():
             req = urllib.request.Request(url, headers={
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             })
-            # [优化点] timeout 调整为 60秒，防止 512KB 在慢速网络下读取超时
-            with urllib.request.urlopen(req, timeout=60) as response:
+            
+            with urllib.request.urlopen(req, timeout=30) as response:
                 while downloaded_in_task < TOTAL_BYTES_TO_DOWNLOAD:
                     chunk_start = time.time()
                     try:
+                        # 这里的 read 会受到全局 socket.setdefaulttimeout 的保护
                         chunk = response.read(CHUNK_SIZE)
                         if not chunk: break 
                     except Exception:
@@ -96,7 +100,6 @@ def scheduler_thread():
         
         if 0 <= sh_now.hour <= 4:
             if sh_now.hour != last_hour:
-                # 启动新线程，不阻塞调度器
                 threading.Thread(target=run_traffic_task, daemon=True).start()
                 last_hour = sh_now.hour
         else:
@@ -104,7 +107,7 @@ def scheduler_thread():
             
         time.sleep(30)
 
-# --- CPU & Web 逻辑 ---
+# --- CPU 逻辑 ---
 def cpu_stress_thread():
     period = 0.1
     if TARGET_CPU <= 0: return
@@ -124,7 +127,7 @@ class StatusHandler(BaseHTTPRequestHandler):
         self.end_headers()
         try:
             res = (
-                f"Oracle Keepalive Monitor (v3 Final)\n"
+                f"Oracle Keepalive Monitor (v3.1 Fix)\n"
                 f"--------------------------------------------\n"
                 f"Current Shanghai Time : {STATUS['shanghai_time']}\n"
                 f"Traffic Status        : {STATUS['traffic_status']}\n"
@@ -137,18 +140,31 @@ class StatusHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args): pass
 
 if __name__ == "__main__":
+    # 内存分配放在 try 块中更安全地处理
     try:
         if TARGET_MEM_MB > 0:
+            print(f"正在分配 {TARGET_MEM_MB}MB 内存...")
             _data = bytearray(TARGET_MEM_MB * 1024 * 1024)
             STATUS['memory'] = f"Allocated {TARGET_MEM_MB}MB"
-    except: 
-        STATUS['memory'] = "Alloc Error"
+            print("内存分配完成")
+    except Exception as e: 
+        STATUS['memory'] = f"Alloc Error: {str(e)}"
+        print(f"内存分配失败: {e}")
 
-    server = HTTPServer(('0.0.0.0', MONITOR_PORT), StatusHandler)
+    # 修改点 3: 使用 ThreadingHTTPServer
+    # 这样即使有一个连接卡死（比如 Keep-Alive），其他连接（如 curl）也能正常访问
+    try:
+        server = ThreadingHTTPServer(('0.0.0.0', MONITOR_PORT), StatusHandler)
+    except NameError:
+        # 兼容旧版本 Python (虽然甲骨文通常是新版)
+        import socketserver
+        class ThreadingHTTPServer(socketserver.ThreadingMixIn, HTTPServer): pass
+        server = ThreadingHTTPServer(('0.0.0.0', MONITOR_PORT), StatusHandler)
+
     threading.Thread(target=server.serve_forever, daemon=True).start()
     threading.Thread(target=scheduler_thread, daemon=True).start()
     threading.Thread(target=cpu_stress_thread, daemon=True).start()
     
-    print(f"脚本已启动。Monitor Port: {MONITOR_PORT}")
+    print(f"脚本已启动 (多线程模式)。Monitor Port: {MONITOR_PORT}")
     while True:
         time.sleep(3600)
